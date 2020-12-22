@@ -1,0 +1,3 @@
+(executable
+ (name versions)
+ (libraries batteries sqlite3))
