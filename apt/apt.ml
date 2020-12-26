@@ -5,6 +5,11 @@ module Version: sig
   type t
   val make : string -> (t, string) result
   val compare : t -> t -> int
+  val epoch : t -> int
+  val major : t -> int
+  val minor : t -> int
+  val patch : t -> int
+  val revision : t -> string option
   val to_string : t -> string
 end = struct
   type t =
@@ -49,6 +54,12 @@ end = struct
   let compare t1 t2 =
     Int.compare (v_index t1) (v_index t2)
 
+  let epoch t = t.epoch
+  let major t = t.major
+  let minor t = t.minor
+  let patch t = t.patch
+  let revision t = t.revision
+
   let to_string (v: t) =
     Printf.sprintf "Major: %i, Minor: %i, Patch: %i, Revision: %s" v.major v.minor v.patch (match v.revision with | Some revision -> revision | None -> "")
 
@@ -77,10 +88,11 @@ let pkg_string_of_line line =
      | false -> None)
 
 let package_versions_from_changelog pkg =
-  let changelog_pattern = pkgs_dir ^ pkg ^ "/changelog*.gz" in
-  let input = Unix.open_process_in ("/usr/bin/zcat " ^ changelog_pattern) in
-  let input_enum = BatIO.lines_of input in
-  let pkg_strings = Enum.filter_map pkg_string_of_line input_enum in
+  let path = match Sys.file_exists (pkgs_dir ^ pkg ^ "/changelog.Debian.gz") with
+  | true -> pkgs_dir ^ pkg ^ "/changelog.Debian.gz"
+  | false -> pkgs_dir ^ pkg ^ "/changelog.gz" in
+  let in_channel = BatUnix.open_process_args_in "/usr/bin/zcat" [| "-c" ; path |] in
+  let pkg_strings = Enum.filter_map pkg_string_of_line (BatIO.lines_of (BatIO.input_channel in_channel)) in
   let (version_strings, date_strings) = Enum.partition
     (fun s-> match s with
               | VersionString _vs -> true
@@ -107,3 +119,9 @@ let installed_packages () =
 
 let held_packages () =
   ()
+
+let test () =
+  let versions = package_versions_from_changelog "gnome-shell" in
+  List.iter
+    (fun v -> Printf.printf "%s\n" (Version.to_string v.version))
+    versions

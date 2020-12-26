@@ -1,5 +1,3 @@
-open Batteries
-
 let all_versions () =
   let pkg_names = Apt.installed_packages() in
   List.iter
@@ -11,5 +9,5 @@ let all_versions () =
     )
     pkg_names
 
-let _ =
+let () =
   all_versions ()

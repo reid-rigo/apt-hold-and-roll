@@ -5,10 +5,18 @@ case $1 in
     echo
     ;;
 
+  test)
+    dune runtest
+    ;;
+
+  compress)
+    upx _build/default/cli/Cli.exe -o _build/default/cli/Cli.min.exe
+    ;;
+
   *)
     dune build
     echo
-    ./_build/default/versions.exe
+    ./_build/default/cli/Cli.exe
     ;;
 
 esac
